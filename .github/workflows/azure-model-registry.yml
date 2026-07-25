@@ -8,6 +8,10 @@ on:
         required: true
         default: 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8s-world.pt'
 
+permissions:
+  id-token: write # Required for requesting the OIDC JWT token
+  contents: read
+
 jobs:
   download-convert-upload:
     runs-on: ubuntu-latest
@@ -53,9 +57,11 @@ jobs:
           rm model.pt
 
       - name: Login to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Install Azure ML CLI v2
         run: az extension add -n ml -y
@@ -66,5 +72,4 @@ jobs:
             --name "yolov8s-world-secure" \
             --version "1" \
             --path ./yolov8s-world.safetensors \
-            --resource-group "${{ secrets.AZURE_RG }}" \
-            --workspace-name "${{ secrets.AZURE_WORKSPACE }}"
+            --registry-name "${{ vars.AZURE_REGISTRY_NAME }}"
