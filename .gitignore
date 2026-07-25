@@ -7,6 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Models
+*.safetensors
+*.pt
+
 node_modules
 dist
 dist-ssr
@@ -387,3 +391,5 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+backend/yolov8s-world.safetensors
+backend/weights/
