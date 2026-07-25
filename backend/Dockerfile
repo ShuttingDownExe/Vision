@@ -14,7 +14,7 @@ RUN python prepare.py && rm yolov8s-worldv2.pt
 
 # Pre-download the CLIP model weights into the Docker image for Air-Gapped security
 # We do this by initializing the model and forcing it to embed a test word
-RUN python -c "from ultralytics import YOLOWorld; from safetensors.torch import load_model; m = YOLOWorld('yolov8s-world.yaml'); load_model(m.model, 'yolov8s-world.safetensors'); m.set_classes(['test'])"
+RUN python -c "from ultralytics import YOLOWorld; from safetensors.torch import load_model; m = YOLOWorld('yolov8s-world.yaml'); load_model(m.model, 'yolov8s-world.safetensors', strict=False); m.set_classes(['test'])"
 
 # Copy the server code
 COPY server.py .

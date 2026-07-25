@@ -19,7 +19,7 @@ print("Building highly secure blank model architecture...")
 model = YOLOWorld('yolov8s-world.yaml')
 
 print("Injecting verified weights from safe format (.safetensors)...")
-load_model(model.model, 'yolov8s-world.safetensors')
+load_model(model.model, 'yolov8s-world.safetensors', strict=False)
 print("Secure YOLO-World loaded successfully!")
 
 @app.websocket("/ws")
