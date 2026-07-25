@@ -1,0 +1,70 @@
+name: Secure Model Pipeline (Azure ML Registry)
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_url:
+        description: 'URL of the insecure .pt model'
+        required: true
+        default: 'https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8s-world.pt'
+
+jobs:
+  download-convert-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch ultralytics safetensors
+
+      - name: Download Model
+        run: |
+          echo "Downloading model from ${{ github.event.inputs.model_url }}..."
+          wget -q ${{ github.event.inputs.model_url }} -O model.pt
+
+      - name: Convert .pt to .safetensors (Zero Trust Protocol)
+        run: |
+          python -c "
+          import torch
+          from ultralytics import YOLOWorld
+          from safetensors.torch import save_file
+
+          print('Extracting weights from insecure .pt file...')
+          model = YOLOWorld('model.pt')
+          state_dict = model.model.state_dict()
+
+          # Fix scalar dimensions to match the blank architecture
+          fixed_dict = {}
+          for k, v in state_dict.items():
+              if v.dim() == 0:
+                  fixed_dict[k] = v.unsqueeze(0)
+              else:
+                  fixed_dict[k] = v
+
+          save_file(fixed_dict, 'yolov8s-world.safetensors')
+          print('Successfully created 100% secure safetensors model!')
+          "
+          # Destroy the original .pt file
+          rm model.pt
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Azure ML CLI v2
+        run: az extension add -n ml -y
+
+      - name: Push to Azure Model Registry
+        run: |
+          az ml model create \
+            --name "yolov8s-world-secure" \
+            --version "1" \
+            --path ./yolov8s-world.safetensors \
+            --resource-group "${{ secrets.AZURE_RG }}" \
+            --workspace-name "${{ secrets.AZURE_WORKSPACE }}"

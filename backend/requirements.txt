@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+ultralytics
+Pillow
+websockets
+safetensors
