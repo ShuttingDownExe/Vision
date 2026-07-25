@@ -61,3 +61,31 @@ Once the new, smarter model is in the registry, we need to push it to your remot
 3. **The Secure Pull:** ArgoCD periodically polls your GitHub repository over outbound HTTPS. It notices the `k8s.yaml` file changed. It securely pulls down the new configuration, reaches out to the Azure Registry, downloads the new `v2.0` Docker image, and performs a rolling restart of your Pods.
 
 **The Result:** The model on a remote oil rig or factory floor gets smarter overnight, entirely automatically, without a single inbound firewall port being opened.
+
+---
+
+## 5. Model Training Environments (Where to Train)
+To execute the fine-tuning step in the pipeline, you need access to NVIDIA GPUs. Depending on what stage of development you are in, here is a detailed breakdown of the two best options:
+
+### Option A: Google Colab Pro (For Prototyping & Sandbox)
+Before writing automation scripts, you should manually train the first version of your custom YOLOv8 model to understand the hyper-parameters and dataset quality.
+* **The Setup:** Google Colab provides a free/cheap Jupyter Notebook environment hosted in the cloud. By upgrading to Colab Pro ($10/month), you gain access to powerful GPUs like the NVIDIA A100 or V100.
+* **The Workflow:** 
+  1. Zip your Roboflow/custom dataset and upload it to Google Drive.
+  2. Mount your Google Drive in the Colab notebook.
+  3. Run a single command in the notebook: `!yolo train data=/content/drive/MyDrive/dataset/data.yaml model=yolov8n.pt epochs=100 imgsz=640`
+  4. After 1-2 hours, download the resulting `best.pt` model weights file to your local Mac.
+  5. Run our local `prepare.py` script to securely convert it to `.safetensors`.
+* **When to use:** Use this for the initial Proof of Concept (PoC), debugging bad datasets, and confirming that your CCTV angles are viable before committing to enterprise cloud resources.
+
+### Option B: Azure Machine Learning (For Automated Production MLOps)
+Once the dataset is proven, the training process must be automated so it happens without human intervention. Azure Machine Learning (Azure ML) perfectly integrates with the AKS edge deployments.
+* **The Setup:** In Azure ML, you configure a "Compute Cluster" of GPU nodes (e.g., `Standard_NC6s_v3` with NVIDIA V100s). You configure the cluster to scale down to `0` nodes when idle, meaning you pay exactly $0.00 when the model isn't actively training.
+* **The Workflow:**
+  1. A human reviewer approves new CCTV frames in your labeling tool, which triggers a GitHub Action webhook.
+  2. The GitHub Action commands Azure ML to start a training job. The Compute Cluster scales from 0 to 1 GPU node.
+  3. Azure ML automatically mounts your Azure Blob Storage (where the dataset lives), pulls the YOLOv8 Docker image, and runs the training script.
+  4. The Python script within Azure ML evaluates the new model. If it passes accuracy checks, the script dynamically runs the `.safetensors` conversion protocol.
+  5. Azure ML pushes the secure `.safetensors` file directly into your **Azure Model Registry**. The GPU cluster immediately scales back to 0 to stop billing.
+  6. Your remote Edge GitOps (ArgoCD) detects the new version in the registry and pulls it down to the factory floor.
+* **When to use:** Use this for the production Data Flywheel. It completely removes the developer from the loop, turning raw CCTV footage into smarter edge models entirely autonomously.
