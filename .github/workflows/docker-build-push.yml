@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  ACR_NAME: "your-acr-name-here" # REPLACE THIS with your ACR name
+  ACR_NAME: "visioncctv" # REPLACE THIS with your ACR name
 
 jobs:
   build-and-push:
