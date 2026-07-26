@@ -73,10 +73,11 @@ jobs:
       - name: Install Azure ML CLI v2
         run: az extension add -n ml -y
 
-      - name: Push to Azure Model Registry
+      - name: Push to Azure ML Workspace
         run: |
           az ml model create \
             --name "yolov8s-world-secure" \
             --path ./yolov8s-world.safetensors \
             --type custom_model \
-            --registry-name "${{ vars.AZURE_REGISTRY_NAME }}"
+            --resource-group "${{ vars.AZURE_RG }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}"
