@@ -79,4 +79,7 @@ jobs:
             --name "yolov8s-world-secure" \
             --version "1" \
             --path ./yolov8s-world.safetensors \
+            --type custom_model \
+            --resource-group "${{ vars.AZURE_RG }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}" \
             --registry-name "${{ vars.AZURE_REGISTRY_NAME }}"
