@@ -62,7 +62,8 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          auth-type: OIDC
+          auth-type: SERVICE_PRINCIPAL
+
 
       - name: Install Azure ML CLI v2
         run: az extension add -n ml -y
