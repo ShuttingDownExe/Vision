@@ -1,0 +1,59 @@
+name: Build and Push Inference Container
+
+on:
+  workflow_dispatch: # Manual trigger for now
+  # push:
+  #   branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_NAME: "your-acr-name-here" # REPLACE THIS with your ACR name
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login (Passwordless OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Azure ML CLI v2
+        run: az extension add -n ml -y
+
+      - name: Download Production Model from Azure ML
+        run: |
+          # Download the latest model from the workspace directly into the backend folder
+          az ml model download \
+            --name "yolov8s-world-secure" \
+            --version 1 \
+            --download-path ./backend \
+            --resource-group "${{ vars.AZURE_RG }}" \
+            --workspace-name "${{ vars.AZURE_WORKSPACE }}"
+            
+          # The CLI puts it in a subfolder, so we move it to the root of the backend folder
+          mv ./backend/yolov8s-world-secure/yolov8s-world.safetensors ./backend/yolov8s-world.safetensors
+
+      - name: Login to Azure Container Registry
+        run: |
+          # Uses the exact same OIDC credential to log into the container registry!
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build and Push Backend Image
+        run: |
+          IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/vision-backend:${{ github.sha }}"
+          LATEST_TAG="${{ env.ACR_NAME }}.azurecr.io/vision-backend:latest"
+          
+          # The Dockerfile now expects the safetensors file to be sitting right there!
+          docker build -t $IMAGE_TAG -t $LATEST_TAG ./backend
+          
+          docker push $IMAGE_TAG
+          docker push $LATEST_TAG
