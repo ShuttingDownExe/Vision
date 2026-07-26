@@ -77,7 +77,6 @@ jobs:
         run: |
           az ml model create \
             --name "yolov8s-world-secure" \
-            --version "1" \
             --path ./yolov8s-world.safetensors \
             --type custom_model \
             --registry-name "${{ vars.AZURE_REGISTRY_NAME }}"
