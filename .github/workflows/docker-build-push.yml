@@ -47,13 +47,24 @@ jobs:
           # Uses the exact same OIDC credential to log into the container registry!
           az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Build and Push Backend Image
+      - name: Build and Push Images
         run: |
-          IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/vision-backend:${{ github.sha }}"
-          LATEST_TAG="${{ env.ACR_NAME }}.azurecr.io/vision-backend:latest"
+          FRONTEND_IMAGE="${{ env.ACR_NAME }}.azurecr.io/vision-frontend:${{ github.sha }}"
+          FRONTEND_LATEST="${{ env.ACR_NAME }}.azurecr.io/vision-frontend:latest"
           
-          # The Dockerfile now expects the safetensors file to be sitting right there!
-          docker build -t $IMAGE_TAG -t $LATEST_TAG ./backend
+          BACKEND_IMAGE="${{ env.ACR_NAME }}.azurecr.io/vision-backend:${{ github.sha }}"
+          BACKEND_LATEST="${{ env.ACR_NAME }}.azurecr.io/vision-backend:latest"
           
-          docker push $IMAGE_TAG
-          docker push $LATEST_TAG
+          # Build Frontend
+          docker build -t $FRONTEND_IMAGE -t $FRONTEND_LATEST .
+          
+          # Build Backend (expects safetensors file to be present)
+          docker build -t $BACKEND_IMAGE -t $BACKEND_LATEST ./backend
+          
+          # Push Frontend
+          docker push $FRONTEND_IMAGE
+          docker push $FRONTEND_LATEST
+          
+          # Push Backend
+          docker push $BACKEND_IMAGE
+          docker push $BACKEND_LATEST
