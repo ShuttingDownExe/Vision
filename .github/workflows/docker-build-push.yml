@@ -1,4 +1,4 @@
-name: Build and Push Inference Container
+name: Build and Push Frontend and Inference Container
 
 on:
   workflow_dispatch: # Manual trigger for now
