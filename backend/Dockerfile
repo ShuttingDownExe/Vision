@@ -8,9 +8,8 @@ RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 git && rm -rf /var/
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Generate the secure safetensors model securely from the source weights
-COPY prepare.py .
-RUN python prepare.py && rm yolov8s-worldv2.pt
+# Copy the verified safetensors model directly from the build context
+COPY yolov8s-world.safetensors .
 
 # Pre-download the CLIP model weights into the Docker image for Air-Gapped security
 # We do this by initializing the model and forcing it to embed a test word

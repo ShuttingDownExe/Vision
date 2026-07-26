@@ -8,6 +8,10 @@ cluster:
 	k3d cluster create vision-poc -p "8080:30080@server:0" -p "8000:30000@server:0"
 
 build:
+	@echo "Fetching/Building Safetensors model locally for development..."
+	@if [ ! -f backend/yolov8s-world.safetensors ]; then \
+		docker run --rm -v $(PWD)/backend:/app -w /app python:3.11-slim bash -c "pip install --no-cache-dir torch ultralytics safetensors && python prepare.py && rm yolov8s-worldv2.pt"; \
+	fi
 	@echo "Building Docker Images..."
 	docker build -t vision-frontend:latest .
 	docker build -t vision-backend:latest backend/
